@@ -1,4 +1,6 @@
 import { Fragment } from 'react';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Explore from './Pages/Explore';
 import Profile from './Pages/Profile';
@@ -17,13 +19,18 @@ function App() {
         <Routes>
           <Route path='/' element={<Explore />} />
           <Route path='/offers' element={<Offers />} />
-          <Route path='/profile' element={<SignIn />} />
+          <Route path='/profile' element={<Profile />} />
           <Route path='/sign-in' element={<SignIn />} />
           <Route path='/sign-up' element={<SignUp />} />
           <Route path='/forgot-password' element={<ForgotPassword />} />
         </Routes>
         <Navbar />
       </Router>
+      <ToastContainer
+        newestOnTop={true}
+        hideProgressBar={true}
+        autoClose={2500}
+      />
     </Fragment>
   );
 }

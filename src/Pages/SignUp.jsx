@@ -1,11 +1,20 @@
 import { useState } from 'react';
+import { toast } from 'react-toastify';
 import { Link, useNavigate } from 'react-router-dom';
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  updateProfile,
+} from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase.config';
 import { ReactComponent as ArrowRightIcon } from '../assets/svg/keyboardArrowRightIcon.svg';
-//we dont need react component for visibility cause its gonna be set as a scource for an immage
 import visibilityIcon from '../assets/svg/visibilityIcon.svg';
+import visibilityOffIcon from '../assets/svg/visibilityOffIcon.svg';
 
 function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
+  const [visibility, setVisibilty] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -23,6 +32,46 @@ function SignUp() {
     }));
   };
 
+  //USER AUTH
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      //Initializing our Auth object
+      const auth = getAuth();
+      //creating user(registering by also passing auth) and storing it in a consntant
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      //getting user from userCredentials (firebase thing)
+      const user = userCredential.user;
+      //upateprofile eg displayname when logged in
+      updateProfile(auth.currentUser, {
+        displayName: name,
+      });
+
+      //making a copy of form to database without the password
+      const formDataCopy = { ...formData };
+      delete formDataCopy.password;
+      formDataCopy.timestamp = serverTimestamp();
+
+      await setDoc(doc(db, 'users', user.uid), formDataCopy);
+      toast.info('New User has been created successfully', {
+        autoClose: 5000,
+      });
+      //navigate to homepage after logging in
+      navigate('/profile');
+    } catch (error) {
+      toast.error('Error occured! Please retry.');
+    }
+  };
+
+  const handleVisibilty = () => {
+    setShowPassword(!showPassword);
+    setVisibilty(!visibility);
+  };
+
   return (
     <div>
       <div className='pageContainer'>
@@ -30,7 +79,7 @@ function SignUp() {
           <p className='pageHeader'>Sign Up!</p>
         </header>
 
-        <form>
+        <form onSubmit={onSubmit}>
           <input
             type='text'
             placeholder='Name'
@@ -58,10 +107,10 @@ function SignUp() {
               onChange={onChange}
             />
             <img
-              src={visibilityIcon}
+              src={visibility ? visibilityOffIcon : visibilityIcon}
               alt='show password'
               className='showPassword'
-              onClick={() => setShowPassword(!showPassword)}
+              onClick={handleVisibilty}
             />
           </div>
 
@@ -79,7 +128,7 @@ function SignUp() {
 
         {/* Google OAuth */}
 
-        <Link to='/sign-in' className='registerLink'>
+        <Link to='/sign-in' className='signLink'>
           Sign In Instead
         </Link>
       </div>

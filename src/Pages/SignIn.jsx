@@ -1,12 +1,18 @@
 import { useState } from 'react';
+import { toast } from 'react-toastify';
 import { Link, useNavigate } from 'react-router-dom';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { ReactComponent as ArrowRightIcon } from '../assets/svg/keyboardArrowRightIcon.svg';
 //we dont need react component for visibility cause its gonna be set as a scource for an immage
 import visibilityIcon from '../assets/svg/visibilityIcon.svg';
+import visibilityOffIcon from '../assets/svg/visibilityOffIcon.svg';
 
 function SignIn() {
   //for the password visibilty icon and function
   const [showPassword, setShowPassword] = useState(false);
+  const [visibility, setVisibilty] = useState(false);
+
+  const navigate = useNavigate();
 
   //for the form data as object. Instead of having different states for different input fields
   const [formData, setFormData] = useState({
@@ -16,14 +22,38 @@ function SignIn() {
   //destructuring from formData
   const { email, password } = formData;
 
-  const navigate = useNavigate();
-
   //set previous data and dynamically change email and password to respective using ID. We have made onCHange dynamically usable for other fields, we just have to set the ID as the same name we set it up in the formData.
   const onChange = (e) => {
     setFormData((prevState) => ({
       ...prevState,
       [e.target.id]: e.target.value,
     }));
+  };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const auth = getAuth();
+
+      const userCredentials = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      if (userCredentials.user) {
+        toast.success('Sign in Successful');
+        navigate('/');
+      }
+    } catch (error) {
+      toast.error('User Credentials not found');
+    }
+  };
+
+  //handle visibilty icon
+  const handleVisibilty = () => {
+    setShowPassword(!showPassword);
+    setVisibilty(!visibility);
   };
 
   return (
@@ -33,7 +63,7 @@ function SignIn() {
           <p className='pageHeader'>Welcome Back!</p>
         </header>
 
-        <form>
+        <form onSubmit={onSubmit}>
           <input
             type='email'
             placeholder='Email'
@@ -53,10 +83,10 @@ function SignIn() {
               onChange={onChange}
             />
             <img
-              src={visibilityIcon}
+              src={visibility ? visibilityOffIcon : visibilityIcon}
               alt='show password'
               className='showPassword'
-              onClick={() => setShowPassword(!showPassword)}
+              onClick={handleVisibilty}
             />
           </div>
 
